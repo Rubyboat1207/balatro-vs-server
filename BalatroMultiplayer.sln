@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BalatroMultiplayer", "BalatroMultiplayer\BalatroMultiplayer.csproj", "{AFA001E5-A2B2-4C78-AF0D-D5590F3F55EB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AFA001E5-A2B2-4C78-AF0D-D5590F3F55EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AFA001E5-A2B2-4C78-AF0D-D5590F3F55EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AFA001E5-A2B2-4C78-AF0D-D5590F3F55EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFA001E5-A2B2-4C78-AF0D-D5590F3F55EB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
