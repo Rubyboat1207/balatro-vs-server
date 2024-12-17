@@ -1,44 +1,99 @@
-﻿using System.Net.Sockets;
-using System.Text;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using JetBrains.Annotations;
 
 namespace BalatroMultiplayer;
 
-public interface IMessageHandler
+public abstract class InboundMessage
 {
-    Task Handle(TcpClient[] clients, TcpClient sender);
-}
-
-public class MessageContainer(string type, object data)
-{
-    [JsonPropertyName("type")] private string Type { get; set; } = type;
-
-    [JsonPropertyName("data")] private string Data { get; set; } = JsonSerializer.Serialize(data);
-
-    public IMessageHandler? GetHandler()
+    public MessageContainer? Parent { get; set; }
+    
+    public virtual async Task Handle(Player[] clients, Player sender)
     {
-        if (Type == "hand_score")
+        foreach (var client in clients.Where(c => c != sender))
         {
-            return JsonSerializer.Deserialize<UpdateScoreMessage>(Data);
+            if (Parent is not null)
+            {
+                await client.SendMessage(Parent);
+            }
         }
-
-        return null;
     }
 }
 
-public class UpdateScoreMessage(int score) : IMessageHandler
+public class MessageContainer
+{
+    public MessageContainer(string? type, object data)
+    {
+        this.Type = type;
+        this.Data = JsonSerializer.Serialize(data);
+    }
+    public MessageContainer() { }
+
+    [JsonPropertyName("type")] [UsedImplicitly] public string? Type { get; set; }
+
+    [JsonPropertyName("data")] [UsedImplicitly] public string? Data { get; set; }
+
+    public InboundMessage? GetHandler()
+    {
+        if (Data == null)
+        {
+            throw new Exception("Attempted to get handler on empty data");
+        }
+        
+        InboundMessage? handler = Type switch
+        {
+            "update_score" => JsonSerializer.Deserialize<UpdateScoreMessage>(Data),
+            "start_game" => JsonSerializer.Deserialize<StartGameMessage>(Data),
+            "blind_cleared" => JsonSerializer.Deserialize<BlindClearedMessage>(Data),
+            _ => null
+        };
+
+        if (handler != null)
+        {
+            handler.Parent = this;
+        }
+        
+        return handler;
+    }
+}
+
+public class UpdateScoreMessage : InboundMessage
 {
     [JsonPropertyName("score")]
-    public int Score { get; init; } = score;
-
-    public async Task Handle(TcpClient[] clients, TcpClient sender)
+    public int Score { get; init; }
+    [JsonPropertyName("blind")]
+    public int Blind { get; init; }
+    public override async Task Handle(Player[] clients, Player sender)
     {
-        foreach (var client in clients.Where(client => client != sender))
-        {
-            await using var stream = client.GetStream();
-
-            await stream.WriteAsync(Encoding.ASCII.GetBytes(JsonSerializer.Serialize(new MessageContainer("update_score", this))));
-        }
+        await base.Handle(clients, sender);
+        BlindData.UpdateScore(sender, Blind, Score);
     }
+}
+
+public class BlindClearedMessage : InboundMessage
+{
+    [JsonPropertyName("blind")] public int Blind { get; init; }
+    public override Task Handle(Player[] clients, Player sender)
+    {
+        BlindData.MarkCompletedFor(sender, Blind);
+        
+        return Task.CompletedTask;
+    }
+}
+
+public class StartGameMessage : InboundMessage
+{
+    
+    [JsonPropertyName("seed")]
+    public string? Seed { get; init; }
+    [JsonPropertyName("stake")]
+    public int Stake { get; init; }
+}
+
+public class WinLoseMessage(bool won, string prizeType, string prizeValue, int blind)
+{
+    [JsonPropertyName("won")] [UsedImplicitly] public bool Won { get; set; } = won;
+    [JsonPropertyName("prize_type")] [UsedImplicitly] public string PrizeType { get; set; } = prizeType;
+    [JsonPropertyName("prize_value")] [UsedImplicitly] public string PrizeValue { get; set; } = prizeValue;
+    [JsonPropertyName("blind")] [UsedImplicitly] public int Blind { get; set; } = blind;
 }
