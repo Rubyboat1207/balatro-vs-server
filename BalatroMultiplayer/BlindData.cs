@@ -53,18 +53,18 @@ public class BlindData(int blind)
         _playerScores[player.Id].Complete = true;
         var completed = _playerScores.Count(p => p.Value.Complete);
 
-        if (Player.PlayerCount - completed == 1)
-        {
-            Guid playerId = _playerScores.First(pl => !pl.Value.Complete).Key;
-
-            Task.Run(() => 
-                Player.GetById(playerId)?.SendMessage(
-                    new MessageContainer("last_on_blind", 
-                        JsonSerializer.Serialize(_blind)
-                    )
-                )
-            );
-        }
+        // if (Player.PlayerCount - completed == 1)
+        // {
+        //     Guid playerId = _playerScores.FirstOrDefault(pl => !pl.Value.Complete).Key;
+        //
+        //     Task.Run(() => 
+        //         Player.GetById(playerId)?.SendMessage(
+        //             new MessageContainer("last_on_blind", 
+        //                 JsonSerializer.Serialize(_blind)
+        //             )
+        //         )
+        //     );
+        // }
 
         if (completed != Player.PlayerCount) return;
         ContestedBlinds.Remove(this);
