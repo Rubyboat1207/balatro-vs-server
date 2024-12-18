@@ -6,7 +6,7 @@
 
 This is the dedicated server for the balatro versus mod. Currently it is required to have a dedicated server to play, but someday I'll implement P2P connections or have a central server to make lobbies in.
 
-You might be looking for the (main repo)[https://github.com/Rubyboat1207/balatro-versus]
+You might be looking for the [main repo](https://github.com/Rubyboat1207/balatro-versus)
 
 ## Build
 [build is available here!](https://github.com/Rubyboat1207/balatro-vs-server/actions)
