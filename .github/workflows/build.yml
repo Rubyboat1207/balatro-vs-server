@@ -1,12 +1,12 @@
-name: Build and Test for Multiple Platforms
+name: Build
 
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
     branches:
-      - main
+      - master
 
 jobs:
   build:
@@ -36,10 +36,6 @@ jobs:
     # Build the solution for each OS and configuration
     - name: Build solution
       run: dotnet build BalatroMultiplayer.sln --configuration ${{ matrix.configuration }}
-
-    # Run tests (if any)
-    - name: Run tests
-      run: dotnet test BalatroMultiplayer.sln --no-build --verbosity normal
 
     # Package the build artifacts
     - name: Archive binaries
