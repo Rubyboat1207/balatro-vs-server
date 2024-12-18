@@ -92,6 +92,15 @@ public class StartGameMessage : InboundMessage
     public string? Seed { get; init; }
     [JsonPropertyName("stake")]
     public int Stake { get; init; }
+
+    public override async Task Handle(Player[] clients, Player sender)
+    {
+        if (Program.CurrentGame is null)
+        {
+            await base.Handle(clients, sender);
+            Program.CurrentGame = this;
+        }
+    }
 }
 
 public class WinLoseMessage(bool won, string prizeType, string prizeValue, int blind)

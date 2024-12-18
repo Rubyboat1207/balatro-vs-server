@@ -16,6 +16,11 @@ public class Player
     {
         _client = client;
         ConnectedClients.Add(this);
+
+        if (Program.CurrentGame is not null)
+        {
+            Task.Run(() => SendMessage(new MessageContainer("start_game", Program.CurrentGame)));
+        }
     }
 
     public static Player? GetById(Guid id)
@@ -43,6 +48,7 @@ public class Player
         if (All().Count(pl => !pl.LostGame) == 1)
         {
             await All().First(pl => !pl.LostGame).SendMessage(new MessageContainer("game_normal", null));
+            Program.CurrentGame = null;
         }
     }
 
