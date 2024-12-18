@@ -1,0 +1,57 @@
+name: Build and Test for Multiple Platforms
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest] # Operating systems to target
+        configuration: [Debug, Release]                  # Build configurations
+        platform: [AnyCPU]                               # Add specific platforms if needed, e.g., x64, x86
+
+    steps:
+    # Checkout the repository
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Setup .NET environment
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0' # Replace with your .NET version
+
+    # Restore dependencies
+    - name: Restore dependencies
+      run: dotnet restore BalatroMultiplayer.sln
+
+    # Build the solution for each OS and configuration
+    - name: Build solution
+      run: dotnet build BalatroMultiplayer.sln --configuration ${{ matrix.configuration }}
+
+    # Run tests (if any)
+    - name: Run tests
+      run: dotnet test BalatroMultiplayer.sln --no-build --verbosity normal
+
+    # Package the build artifacts
+    - name: Archive binaries
+      if: success()
+      run: |
+        mkdir -p build/${{ matrix.os }}/${{ matrix.configuration }}
+        cp -R ./BalatroMultiplayer/bin/${{ matrix.configuration }}/ ./build/${{ matrix.os }}/${{ matrix.configuration }}
+      shell: bash
+
+    # Upload build artifacts
+    - name: Upload binaries
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.os }}-${{ matrix.configuration }}-binaries
+        path: build/${{ matrix.os }}/${{ matrix.configuration }}
