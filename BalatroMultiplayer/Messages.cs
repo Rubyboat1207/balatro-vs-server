@@ -92,6 +92,8 @@ public class StartGameMessage : InboundMessage
     public string? Seed { get; init; }
     [JsonPropertyName("stake")]
     public int Stake { get; init; }
+    [JsonPropertyName("deck")]
+    public string? Deck { get; init; }
 
     public override async Task Handle(Player[] clients, Player sender)
     {
