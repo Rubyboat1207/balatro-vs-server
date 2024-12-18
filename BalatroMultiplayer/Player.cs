@@ -94,7 +94,7 @@ public class Player
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"An error occurred with a client: {ex.Message}");
+            Console.WriteLine($"An error occurred with a client: {ex}");
         }
         finally
         {
