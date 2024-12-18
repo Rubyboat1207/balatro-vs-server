@@ -41,12 +41,30 @@ public class BlindData(int blind)
         {
             _playerScores.Add(player.Id, new PlayerData(score, false));
         }
+
+        if (Player.PlayerCount == 1)
+        {
+            Task.Run(()=>Player.All()[0].SendMessage(new MessageContainer("last_on_blind", JsonSerializer.Serialize(_blind))));
+        }
     }
 
     private void OnPlayerComplete(Player player)
     {
         _playerScores[player.Id].Complete = true;
         var completed = _playerScores.Count(p => p.Value.Complete);
+
+        if (Player.PlayerCount - completed == 1)
+        {
+            Guid playerId = _playerScores.First(pl => !pl.Value.Complete).Key;
+
+            Task.Run(() => 
+                Player.GetById(playerId)?.SendMessage(
+                    new MessageContainer("last_on_blind", 
+                        JsonSerializer.Serialize(_blind)
+                    )
+                )
+            );
+        }
 
         if (completed != Player.PlayerCount) return;
         ContestedBlinds.Remove(this);
@@ -70,12 +88,42 @@ public class BlindData(int blind)
         
         var winningPlayer = Player.GetById(winner.Value.Key);
 
-        var winMessage = new WinLoseMessage(
-            true,
-            "gain_money",
-            JsonSerializer.Serialize(new Random().Next(5, 20)),
-            _blind
-        );
+        var rand = new Random().Next(0, 3);
+
+        WinLoseMessage winMessage;
+
+        if (rand == 1)
+        {
+            winMessage = new WinLoseMessage(
+                true,
+                "random_joker",
+                JsonSerializer.Serialize((dynamic) new
+                {
+                    rarity = new Random().Next(0, 10) == 5 ? 2 : new Random().Next(0, 2),
+                }),
+                _blind
+            );
+        }else if (rand == 2)
+        {
+            var consumables = new[] { "Tarot", "Planet", "Spectral" };
+            winMessage = new WinLoseMessage(
+                true,
+                "random_consumable",
+                JsonSerializer.Serialize((dynamic) new
+                {
+                    type = consumables[new Random().Next(0, 3)]
+                }),
+                _blind
+            );
+        }else
+        {
+            winMessage = new WinLoseMessage(
+                true,
+                "gain_money",
+                JsonSerializer.Serialize(new Random().Next(5, 20)),
+                _blind
+            );
+        }
 
         Task.Run(() => winningPlayer?.SendMessage(new MessageContainer(
             "declare_winner",

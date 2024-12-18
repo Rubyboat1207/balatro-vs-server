@@ -22,10 +22,10 @@ public abstract class InboundMessage
 
 public class MessageContainer
 {
-    public MessageContainer(string? type, object data)
+    public MessageContainer(string? type, object? data)
     {
-        this.Type = type;
-        this.Data = JsonSerializer.Serialize(data);
+        Type = type;
+        Data = JsonSerializer.Serialize(data);
     }
     public MessageContainer() { }
 
@@ -73,11 +73,15 @@ public class UpdateScoreMessage : InboundMessage
 public class BlindClearedMessage : InboundMessage
 {
     [JsonPropertyName("blind")] public int Blind { get; init; }
-    public override Task Handle(Player[] clients, Player sender)
+    [JsonPropertyName("game_over")] public bool GameOver { get; init; }
+    public override async Task Handle(Player[] clients, Player sender)
     {
+        if (GameOver)
+        {
+            sender.LostGame = true;
+            await Player.WinCheck();
+        }
         BlindData.MarkCompletedFor(sender, Blind);
-        
-        return Task.CompletedTask;
     }
 }
 

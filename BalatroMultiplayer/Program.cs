@@ -5,6 +5,7 @@ namespace BalatroMultiplayer;
 
 internal static class Program
 {
+    public static string Seed;
     private static async Task Main(string[] args)
     {
         const int port = 5304; // Specify the port to listen on

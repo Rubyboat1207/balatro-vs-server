@@ -9,6 +9,7 @@ public class Player
     private static readonly List<Player> ConnectedClients = [];
     private static readonly object ClientListLock = new();
     private readonly TcpClient _client;
+    public bool LostGame = false;
     public Guid Id = Guid.NewGuid();
 
     public Player(TcpClient client)
@@ -35,6 +36,14 @@ public class Player
         }
 
         return players;
+    }
+
+    public static async Task WinCheck()
+    {
+        if (All().Count(pl => !pl.LostGame) == 1)
+        {
+            await All().First(pl => !pl.LostGame).SendMessage(new MessageContainer("game_normal", null));
+        }
     }
 
     public static int PlayerCount
