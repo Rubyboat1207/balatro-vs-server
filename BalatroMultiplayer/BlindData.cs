@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using BalatroMultiplayer.Prizes;
 
 namespace BalatroMultiplayer;
 
@@ -87,43 +88,10 @@ public class BlindData(int blind)
         if (winner == null) return;
         
         var winningPlayer = Player.GetById(winner.Value.Key);
+        
+        var prize = Prize.Prizes[new Random().Next(0, Prize.Prizes.Length)];
 
-        var rand = new Random().Next(0, 3);
-
-        WinLoseMessage winMessage;
-
-        if (rand == 1)
-        {
-            winMessage = new WinLoseMessage(
-                true,
-                "random_joker",
-                JsonSerializer.Serialize((dynamic) new
-                {
-                    rarity = new Random().Next(0, 10) == 5 ? 2 : new Random().Next(0, 2),
-                }),
-                _blind
-            );
-        }else if (rand == 2)
-        {
-            var consumables = new[] { "Tarot", "Planet", "Spectral" };
-            winMessage = new WinLoseMessage(
-                true,
-                "random_consumable",
-                JsonSerializer.Serialize((dynamic) new
-                {
-                    type = consumables[new Random().Next(0, 3)]
-                }),
-                _blind
-            );
-        }else
-        {
-            winMessage = new WinLoseMessage(
-                true,
-                "gain_money",
-                JsonSerializer.Serialize(new Random().Next(5, 20)),
-                _blind
-            );
-        }
+        WinLoseMessage winMessage = new(true, prize.Identifier, JsonSerializer.Serialize(prize.GetPrizeJson()), _blind);
 
         Task.Run(() => winningPlayer?.SendMessage(new MessageContainer(
             "declare_winner",
