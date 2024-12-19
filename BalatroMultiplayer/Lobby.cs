@@ -5,10 +5,9 @@ public class Lobby(string id)
     private static readonly Dictionary<string, Lobby> Lobbies = [];
     public List<BlindData> ContestedBlinds { get; } = [];
     public StartGameMessage? CurrentGame;
-    public string Id { get; private set; } = id;
-    public List<Player> Players = [];
+    public readonly List<Player> Players = [];
 
-    public void Join(Player player)
+    private void Join(Player player)
     {
         Players.Add(player);
         player.LobbyId = id;
@@ -26,7 +25,7 @@ public class Lobby(string id)
 
         if (Players.Count == 0)
         {
-            Lobbies.Remove(Id);
+            Lobbies.Remove(id);
             ContestedBlinds.Clear();
         }
     }
