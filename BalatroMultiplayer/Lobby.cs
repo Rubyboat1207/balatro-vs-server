@@ -4,8 +4,8 @@ public class Lobby(string id)
 {
     private static readonly Dictionary<string, Lobby> Lobbies = [];
     public List<BlindData> ContestedBlinds { get; } = [];
-    public SemaphoreSlim CurrentGameLock = new SemaphoreSlim(1, 1);
-    public StartGameMessage? CurrentGame;
+    private readonly SemaphoreSlim _currentGameLock = new SemaphoreSlim(1, 1);
+    private StartGameMessage? _currentGame;
     public readonly List<Player> Players = [];
 
     private void Join(Player player)
@@ -17,26 +17,26 @@ public class Lobby(string id)
         Players.Add(player);
         player.LobbyId = id;
 
-        if (CurrentGame is not null)
+        if (_currentGame is not null)
         {
-            Task.Run(() => player.SendMessage(new MessageContainer("start_game", CurrentGame)));
+            Task.Run(() => player.SendMessage(new MessageContainer("start_game", _currentGame)));
         }
     }
 
     public async void OnPlayerStartedGame(Player player, StartGameMessage game)
     {
-        await CurrentGameLock.WaitAsync();
+        await _currentGameLock.WaitAsync();
 
-        if (CurrentGame is not null) return;
+        if (_currentGame is not null) return;
 
-        CurrentGame = game;
+        _currentGame = game;
         
         foreach (var others  in Players.Where(pl => pl != player))
         {
             await others.SendMessage(new MessageContainer("start_game", game));
         }
 
-        CurrentGameLock.Release();
+        _currentGameLock.Release();
     }
 
     public void Leave(Player player)
@@ -54,7 +54,7 @@ public class Lobby(string id)
         if (Players.Count(pl => !pl.LostGame) != 1) return;
         
         await Players.First(pl => !pl.LostGame).SendMessage(new MessageContainer("game_normal", null));
-        CurrentGame = null;
+        _currentGame = null;
     }
 
     public static Lobby? GetById(string? id)
