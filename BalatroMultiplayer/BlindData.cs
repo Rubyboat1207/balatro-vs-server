@@ -3,41 +3,17 @@ using BalatroMultiplayer.Prizes;
 
 namespace BalatroMultiplayer;
 
-public class BlindData(int blind)
+public class BlindData(Lobby lobby, int blind)
 {
-    private static readonly List<BlindData> ContestedBlinds = [];
     private class PlayerData(int score, bool complete)
     {
         public int Score = score;
         public bool Complete = complete;
     }
     private readonly Dictionary<Guid, PlayerData> _playerScores = new();
-    private readonly int _blind = blind;
+    public readonly int Blind = blind;
 
-    public static void UpdateScore(Player player, int blind, int score)
-    {
-        var blindData = ContestedBlinds.Find(cb => cb._blind == blind);
-        
-        if (blindData is null)
-        {
-            blindData = new BlindData(blind);
-            ContestedBlinds.Add(blindData);
-        }
-        
-        blindData.UpdateScore(player, score);
-    }
-
-    public static void Reset()
-    {
-        ContestedBlinds.Clear();
-    }
-
-    public static void MarkCompletedFor(Player player, int blind)
-    {
-        ContestedBlinds.Find(cb => cb._blind == blind)?.OnPlayerComplete(player);
-    }
-
-    private void UpdateScore(Player player, int score)
+    public void UpdateScore(Player player, int score)
     {
         if (_playerScores.TryGetValue(player.Id, out var value))
         {
@@ -50,30 +26,17 @@ public class BlindData(int blind)
 
         if (Player.PlayerCount == 1)
         {
-            Task.Run(()=>Player.All()[0].SendMessage(new MessageContainer("last_on_blind", JsonSerializer.Serialize(_blind))));
+            Task.Run(()=>Player.All()[0].SendMessage(new MessageContainer("last_on_blind", JsonSerializer.Serialize(Blind))));
         }
     }
 
-    private void OnPlayerComplete(Player player)
+    public void OnPlayerComplete(Player player)
     {
         _playerScores[player.Id].Complete = true;
         var completed = _playerScores.Count(p => p.Value.Complete);
-
-        // if (Player.PlayerCount - completed == 1)
-        // {
-        //     Guid playerId = _playerScores.FirstOrDefault(pl => !pl.Value.Complete).Key;
-        //
-        //     Task.Run(() => 
-        //         Player.GetById(playerId)?.SendMessage(
-        //             new MessageContainer("last_on_blind", 
-        //                 JsonSerializer.Serialize(_blind)
-        //             )
-        //         )
-        //     );
-        // }
-
+        
         if (completed != Player.PlayerCount) return;
-        ContestedBlinds.Remove(this);
+        lobby.ContestedBlinds.Remove(this);
         KeyValuePair<Guid, PlayerData>? winner = null;
 
         foreach (var score in _playerScores)
@@ -96,14 +59,14 @@ public class BlindData(int blind)
         
         var prize = Prize.Prizes[1];
 
-        WinLoseMessage winMessage = new(true, prize.Identifier, JsonSerializer.Serialize(prize.GetPrizeJson()), _blind);
+        WinLoseMessage winMessage = new(true, prize.Identifier, JsonSerializer.Serialize(prize.GetPrizeJson()), Blind);
 
         Task.Run(() => winningPlayer?.SendMessage(new MessageContainer(
             "declare_winner",
             winMessage
         )));
         
-        var loseMessage = new WinLoseMessage(false, winMessage.PrizeType, winMessage.PrizeValue, _blind);
+        var loseMessage = new WinLoseMessage(false, winMessage.PrizeType, winMessage.PrizeValue, Blind);
         foreach (var loser in Player.All().Where(pl => pl != winningPlayer))
         {
             Task.Run(() => loser.SendMessage(new MessageContainer(

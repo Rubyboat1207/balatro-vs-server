@@ -45,6 +45,7 @@ public class MessageContainer
             "update_score" => JsonSerializer.Deserialize<UpdateScoreMessage>(Data),
             "start_game" => JsonSerializer.Deserialize<StartGameMessage>(Data),
             "blind_cleared" => JsonSerializer.Deserialize<BlindClearedMessage>(Data),
+            "join_lobby" => JsonSerializer.Deserialize<JoinLobbyMessage>(Data),
             _ => null
         };
 
@@ -66,7 +67,7 @@ public class UpdateScoreMessage : InboundMessage
     public override async Task Handle(Player[] clients, Player sender)
     {
         await base.Handle(clients, sender);
-        BlindData.UpdateScore(sender, Blind, Score);
+        Lobby.GetById(sender.LobbyId)?.UpdateScore(sender, Blind, Score);
     }
 }
 
@@ -79,9 +80,26 @@ public class BlindClearedMessage : InboundMessage
         if (GameOver)
         {
             sender.LostGame = true;
-            await Player.WinCheck();
+            var lobby = Lobby.GetById(sender.LobbyId);
+            if (lobby is not null)
+            {
+                await lobby.WinCheck();
+            }
         }
-        BlindData.MarkCompletedFor(sender, Blind);
+
+        Lobby.GetById(sender.LobbyId)?.MarkBlindCompletedFor(sender, Blind);
+    }
+}
+
+public class JoinLobbyMessage : InboundMessage
+{
+    [JsonPropertyName("lobby_id")] public string? LobbyId { get; init; }
+    public override async Task Handle(Player[] clients, Player sender)
+    {
+        if (LobbyId is null) return;
+        Lobby.Join(LobbyId, sender);
+
+        await sender.SendMessage(new MessageContainer("lobby_joined", null));
     }
 }
 
@@ -97,10 +115,14 @@ public class StartGameMessage : InboundMessage
 
     public override async Task Handle(Player[] clients, Player sender)
     {
-        if (Program.CurrentGame is null)
+        if (sender.LobbyId is not null)
         {
-            await base.Handle(clients, sender);
-            Program.CurrentGame = this;
+            var lobby = Lobby.GetById(sender.LobbyId);
+            if (lobby is { CurrentGame: null })
+            {
+                await base.Handle(clients, sender);
+                lobby.CurrentGame = this;
+            }
         }
     }
 }
