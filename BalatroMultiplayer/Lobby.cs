@@ -4,11 +4,16 @@ public class Lobby(string id)
 {
     private static readonly Dictionary<string, Lobby> Lobbies = [];
     public List<BlindData> ContestedBlinds { get; } = [];
+    public SemaphoreSlim CurrentGameLock = new SemaphoreSlim(1, 1);
     public StartGameMessage? CurrentGame;
     public readonly List<Player> Players = [];
 
     private void Join(Player player)
     {
+        if (player.LobbyId is not null)
+        {
+            GetById(player.LobbyId)?.Leave(player);
+        }
         Players.Add(player);
         player.LobbyId = id;
 
@@ -18,16 +23,30 @@ public class Lobby(string id)
         }
     }
 
+    public async void OnPlayerStartedGame(Player player, StartGameMessage game)
+    {
+        await CurrentGameLock.WaitAsync();
+
+        if (CurrentGame is not null) return;
+
+        CurrentGame = game;
+        
+        foreach (var others  in Players.Where(pl => pl != player))
+        {
+            await others.SendMessage(new MessageContainer("start_game", game));
+        }
+
+        CurrentGameLock.Release();
+    }
+
     public void Leave(Player player)
     {
         Players.Remove(player);
         player.LobbyId = null;
 
-        if (Players.Count == 0)
-        {
-            Lobbies.Remove(id);
-            ContestedBlinds.Clear();
-        }
+        if (Players.Count != 0) return;
+        Lobbies.Remove(id);
+        ContestedBlinds.Clear();
     }
 
     public async Task WinCheck()

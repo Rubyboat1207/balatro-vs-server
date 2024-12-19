@@ -118,20 +118,7 @@ public class StartGameMessage : InboundMessage
         if (sender.LobbyId is not null)
         {
             var lobby = Lobby.GetById(sender.LobbyId);
-            if (lobby is not null)
-            {
-                if (lobby.CurrentGame is null)
-                {
-                    lobby.CurrentGame = this;
-                    foreach (var player in clients.Where(pl => pl != sender))
-                    {
-                        if (player.LobbyId == sender.LobbyId)
-                        {
-                            await player.SendMessage(Parent);
-                        }
-                    }
-                }
-            }
+            lobby?.OnPlayerStartedGame(sender, this);
         }
     }
 }
