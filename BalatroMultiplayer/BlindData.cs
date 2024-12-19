@@ -27,6 +27,11 @@ public class BlindData(int blind)
         blindData.UpdateScore(player, score);
     }
 
+    public static void Reset()
+    {
+        ContestedBlinds.Clear();
+    }
+
     public static void MarkCompletedFor(Player player, int blind)
     {
         ContestedBlinds.Find(cb => cb._blind == blind)?.OnPlayerComplete(player);
@@ -89,7 +94,7 @@ public class BlindData(int blind)
         
         var winningPlayer = Player.GetById(winner.Value.Key);
         
-        var prize = Prize.Prizes[new Random().Next(0, Prize.Prizes.Length)];
+        var prize = Prize.Prizes[1];
 
         WinLoseMessage winMessage = new(true, prize.Identifier, JsonSerializer.Serialize(prize.GetPrizeJson()), _blind);
 

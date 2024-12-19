@@ -107,6 +107,8 @@ public class Player
             lock (ClientListLock)
             {
                 ConnectedClients.Remove(this);
+
+                Program.OnAllClientsDisconnected();
             }
 
             _client.Close();
@@ -121,6 +123,9 @@ public class Player
             Console.WriteLine($"Somewhere in the code has attempted to send a message to a since disconnected client. Message was: '{JsonSerializer.Serialize(message)}'");
             return;
         }
-        await _client.GetStream().WriteAsync(Encoding.ASCII.GetBytes(JsonSerializer.Serialize(message) + "\n"));
+
+        string msg = JsonSerializer.Serialize(message);
+        Console.WriteLine($"Sending: {msg}");
+        await _client.GetStream().WriteAsync(Encoding.ASCII.GetBytes(msg + "\n"));
     }
 }

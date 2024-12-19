@@ -19,11 +19,11 @@ internal static class Program
 
             while (true)
             {
-                Console.WriteLine("Waiting for a connection...");
-                TcpClient client = await listener.AcceptTcpClientAsync();
-                Console.WriteLine("Client connected.");
+                var client = await listener.AcceptTcpClientAsync();
+                var player = new Player(client);
+                Console.WriteLine($"Client ({(client.Client.RemoteEndPoint as IPEndPoint)?.Address}) connected");
 
-                _ = Task.Run(() => new Player(client).BeginListening());
+                _ = Task.Run(() => player.BeginListening());
             }
         }
         catch (Exception ex)
@@ -35,5 +35,11 @@ internal static class Program
             listener.Stop();
             Console.WriteLine("Server stopped.");
         }
+    }
+
+    public static void OnAllClientsDisconnected()
+    {
+        CurrentGame = null;
+        BlindData.Reset();
     }
 }
