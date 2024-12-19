@@ -94,7 +94,7 @@ public class BlindData(int blind)
         
         var winningPlayer = Player.GetById(winner.Value.Key);
         
-        var prize = Prize.Prizes[1];
+        var prize = Prize.Prizes[new Random().Next(0, Prize.Prizes.Length)];
 
         WinLoseMessage winMessage = new(true, prize.Identifier, JsonSerializer.Serialize(prize.GetPrizeJson()), _blind);
 
