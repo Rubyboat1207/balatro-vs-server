@@ -35,7 +35,7 @@ public class BlindData(Lobby lobby, int blind)
         _playerScores[player.Id].Complete = true;
         var completed = _playerScores.Count(p => p.Value.Complete);
         
-        if (completed != Player.PlayerCount) return;
+        if (completed != lobby.Players.Count) return;
         lobby.ContestedBlinds.Remove(this);
         KeyValuePair<Guid, PlayerData>? winner = null;
 
