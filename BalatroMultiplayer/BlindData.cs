@@ -68,7 +68,7 @@ public class BlindData(Lobby lobby, int blind)
         )));
         
         var loseMessage = new WinLoseMessage(false, winMessage.PrizeType, winMessage.PrizeValue, Blind);
-        foreach (var loser in Player.All().Where(pl => pl != winningPlayer))
+        foreach (var loser in lobby.Players.Where(pl => pl != winningPlayer))
         {
             Task.Run(() => loser.SendMessage(new MessageContainer(
                 "declare_winner",
