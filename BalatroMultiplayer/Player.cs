@@ -12,6 +12,7 @@ public class Player
     public bool LostGame = false;
     public Guid Id = Guid.NewGuid();
     public string? LobbyId = null;
+    public Lobby? Lobby => Lobby.GetById(LobbyId);
 
     public Player(TcpClient client)
     {
