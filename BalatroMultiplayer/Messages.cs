@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using BalatroMultiplayer.Jokers;
 using JetBrains.Annotations;
 
 namespace BalatroMultiplayer;
@@ -79,7 +80,6 @@ public class BlindClearedMessage : InboundMessage
         if (GameOver)
         {
             sender.LostGame = true;
-            await Player.WinCheck();
         }
         BlindData.MarkCompletedFor(sender, Blind);
     }
@@ -102,6 +102,22 @@ public class StartGameMessage : InboundMessage
             await base.Handle(clients, sender);
             Program.CurrentGame = this;
         }
+    }
+}
+
+public class MultiplayerJokerAbility : InboundMessage
+{
+    [JsonPropertyName("joker")]
+    public string? Joker { get; init; }
+    [JsonPropertyName("extra_data")]
+    public string? ExtraData { get; init; }
+
+    public override async Task Handle(Player[] clients, Player sender)
+    {
+        var handler = JokerHandler.Handlers.FirstOrDefault(jh => jh.Identifier == Joker)?.Handle(sender, ExtraData);
+
+        if (handler is null) return;
+        await handler;
     }
 }
 

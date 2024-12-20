@@ -16,11 +16,6 @@ public class Player
     {
         _client = client;
         ConnectedClients.Add(this);
-
-        if (Program.CurrentGame is not null)
-        {
-            Task.Run(() => SendMessage(new MessageContainer("start_game", Program.CurrentGame)));
-        }
     }
 
     public static Player? GetById(Guid id)
@@ -43,15 +38,6 @@ public class Player
         return players;
     }
 
-    public static async Task WinCheck()
-    {
-        if (All().Count(pl => !pl.LostGame) == 1)
-        {
-            await All().First(pl => !pl.LostGame).SendMessage(new MessageContainer("game_normal", null));
-            Program.CurrentGame = null;
-        }
-    }
-
     public static int PlayerCount
     {
         get
@@ -61,6 +47,11 @@ public class Player
                 return ConnectedClients.Count;
             }
         }
+    }
+
+    private void OnLeave()
+    {
+        ConnectedClients.Remove(this);
     }
 
     public async void BeginListening()
@@ -88,14 +79,14 @@ public class Player
                     Console.WriteLine($"Unknown Message! {receivedMessage}");
                     continue;
                 }
-                
-                Player[] clientsCopy;
-                lock(ClientListLock)
+                Player[] players;
+
+                lock (ClientListLock)
                 {
-                    clientsCopy = ConnectedClients.ToArray();
+                    players = ConnectedClients.ToArray();
                 }
 
-                await handler.Handle(clientsCopy, this);
+                await handler.Handle(players, this);
             }
         }
         catch (Exception ex)
@@ -106,9 +97,7 @@ public class Player
         {
             lock (ClientListLock)
             {
-                ConnectedClients.Remove(this);
-
-                Program.OnAllClientsDisconnected();
+                OnLeave();
             }
 
             _client.Close();
