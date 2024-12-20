@@ -16,7 +16,7 @@ public class SendMessageHandler(string ident, Func<MessageContainer> messageProd
         {
             players = players.Where(playerPredicate.Invoke(player, extraData));
         }
-        
-        if(playerPredicate is null) await Task.WhenAll(players.Select(pl => pl.SendMessage(msg)));
+
+        await Task.WhenAll(players.Select(pl => pl.SendMessage(msg)));
     }
 }

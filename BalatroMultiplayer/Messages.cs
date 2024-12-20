@@ -47,6 +47,7 @@ public class MessageContainer
             "start_game" => JsonSerializer.Deserialize<StartGameMessage>(Data),
             "blind_cleared" => JsonSerializer.Deserialize<BlindClearedMessage>(Data),
             "join_lobby" => JsonSerializer.Deserialize<JoinLobbyMessage>(Data),
+            "multiplayer_joker_ability" => JsonSerializer.Deserialize<MultiplayerJokerAbility>(Data),
             _ => null
         };
 
@@ -133,10 +134,10 @@ public class MultiplayerJokerAbility : InboundMessage
 
     public override async Task Handle(Player[] clients, Player sender)
     {
-        var handler = JokerHandler.Handlers.FirstOrDefault(jh => jh.Identifier == Joker)?.Handle(sender, ExtraData);
+        var handler = JokerHandler.Handlers.FirstOrDefault(jh => jh.Identifier == Joker);
 
         if (handler is null) return;
-        await handler;
+        await handler.Handle(sender, ExtraData);
     }
 }
 

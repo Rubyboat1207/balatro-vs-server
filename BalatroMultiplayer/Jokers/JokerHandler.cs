@@ -4,7 +4,7 @@ public abstract class JokerHandler
 {
     public static readonly JokerHandler[] Handlers = [
         new SendMessageHandler("ghoulish_imp", 
-            () => new MessageContainer("delete_card", new {kind = "playing_card"}),
+            () => new MessageContainer("hand_effect", new {effect = "force_select", selector = "random"}),
             PlayerPredicates.NotSender
         )
     ];
