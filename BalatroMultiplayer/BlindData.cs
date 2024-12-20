@@ -57,7 +57,7 @@ public class BlindData(Lobby lobby, int blind)
         
         var winningPlayer = Player.GetById(winner.Value.Key);
 
-        int? hardcodedPrize = 3;
+        int? hardcodedPrize = null;
         var prize = hardcodedPrize is null ? Prize.Prizes[new Random().Next(0, Prize.Prizes.Length)] : Prize.Prizes[hardcodedPrize.Value];
 
         WinLoseMessage winMessage = new(true, prize.Identifier, JsonSerializer.Serialize(prize.GetPrizeJson()), Blind);
