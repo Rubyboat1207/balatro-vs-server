@@ -1,6 +1,6 @@
-﻿namespace BalatroMultiplayer.Jokers;
+﻿namespace BalatroMultiplayer.Abilities;
 
-public class SendMessageHandler(string ident, Func<MessageContainer> messageProducer, Func<Player, string?, Func<Player, int, bool>>? playerPredicate=null) : JokerHandler
+public class SendMessageHandler(string ident, Func<MessageContainer> messageProducer, Func<Player, string?, Func<Player, int, bool>>? playerPredicate=null) : AbilityHandler
 {
     public override string Identifier => ident;
     public override async Task Handle(Player player, string? extraData)

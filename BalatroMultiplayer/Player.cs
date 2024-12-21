@@ -27,7 +27,8 @@ public class Player
             return ConnectedClients.Find(p => p.Id == id);
         }
     }
-
+    
+    // Dont use generally.
     public static Player[] All()
     {
         Player[] players;

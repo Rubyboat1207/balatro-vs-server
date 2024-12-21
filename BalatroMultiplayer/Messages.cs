@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using BalatroMultiplayer.Jokers;
+using BalatroMultiplayer.Abilities;
+using BalatroMultiplayer.Prizes;
 using JetBrains.Annotations;
 
 namespace BalatroMultiplayer;
@@ -47,7 +48,8 @@ public class MessageContainer
             "start_game" => JsonSerializer.Deserialize<StartGameMessage>(Data),
             "blind_cleared" => JsonSerializer.Deserialize<BlindClearedMessage>(Data),
             "join_lobby" => JsonSerializer.Deserialize<JoinLobbyMessage>(Data),
-            "multiplayer_joker_ability" => JsonSerializer.Deserialize<MultiplayerJokerAbility>(Data),
+            "ability_used" => JsonSerializer.Deserialize<AbilityUsedMessage>(Data),
+            "heartbeat" => JsonSerializer.Deserialize<HeartbeatMessage>(Data),
             _ => null
         };
 
@@ -70,6 +72,9 @@ public class UpdateScoreMessage : InboundMessage
     {
         await base.Handle(clients, sender);
         Lobby.GetById(sender.LobbyId)?.UpdateScore(sender, Blind, Score);
+        Prize prize = Prize.Prizes[4];
+        await sender.SendMessage(new MessageContainer("declare_winner",
+            new WinLoseMessage(true, prize.Identifier, JsonSerializer.Serialize(prize.GetPrizeJson()), Blind)));
     }
 }
 
@@ -125,16 +130,16 @@ public class StartGameMessage : InboundMessage
     }
 }
 
-public class MultiplayerJokerAbility : InboundMessage
+public class AbilityUsedMessage : InboundMessage
 {
-    [JsonPropertyName("joker")]
+    [JsonPropertyName("ability")]
     public string? Joker { get; init; }
     [JsonPropertyName("extra_data")]
     public string? ExtraData { get; init; }
 
     public override async Task Handle(Player[] clients, Player sender)
     {
-        var handler = JokerHandler.Handlers.FirstOrDefault(jh => jh.Identifier == Joker);
+        var handler = AbilityHandler.Handlers.FirstOrDefault(jh => jh.Identifier == Joker);
 
         if (handler is null) return;
         await handler.Handle(sender, ExtraData);
@@ -147,4 +152,12 @@ public class WinLoseMessage(bool won, string prizeType, string prizeValue, int b
     [JsonPropertyName("prize_type")] [UsedImplicitly] public string PrizeType { get; set; } = prizeType;
     [JsonPropertyName("prize_value")] [UsedImplicitly] public string PrizeValue { get; set; } = prizeValue;
     [JsonPropertyName("blind")] [UsedImplicitly] public int Blind { get; set; } = blind;
+}
+
+public class HeartbeatMessage : InboundMessage
+{
+    public override async Task Handle(Player[] clients, Player sender)
+    {
+        await sender.SendMessage(new MessageContainer("heartbeat", null));
+    }
 }

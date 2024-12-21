@@ -10,8 +10,11 @@ public abstract class Prize
         new RandomNumberPrize("gain_money", 5, 20),
         new RandomElementPrize<string>("random_consumable", ["Tarot", "Planet", "Spectral"]),
         new RandomJokerPrize(),
-        new RandomElementPrize<CreateJokerRequest>("create_joker", [
-            new CreateJokerRequest("ghoulish_imp", true)
+        new RandomElementPrize<CreateCardRequest>("create_joker", [
+            new CreateCardRequest("ghoulish_imp", true)
+        ]),
+        new RandomElementPrize<CreateCardRequest>("create_consumable", [
+            new CreateCardRequest("mask", true)
         ])
     ];
     public abstract string Identifier { get; }
@@ -19,9 +22,9 @@ public abstract class Prize
     public abstract object? GetPrizeJson();
 }
 
-public struct CreateJokerRequest(string joker, bool? modded = false)
+public struct CreateCardRequest(string joker, bool? modded = false)
 {
-    [JsonPropertyName("joker")] [UsedImplicitly] public string Joker { get; set; } = joker;
+    [JsonPropertyName("card")] [UsedImplicitly] public string Joker { get; set; } = joker;
 
     [JsonPropertyName("modded")] [UsedImplicitly] public bool? Modded { get; set; } = modded;
 }
