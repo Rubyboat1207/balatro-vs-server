@@ -39,7 +39,11 @@ public class MessageContainer
     {
         if (Data == null)
         {
-            throw new Exception("Attempted to get handler on empty data");
+            return Type switch
+            {
+                "heartbeat" => new HeartbeatMessage(),
+                _ => null
+            };
         }
         
         InboundMessage? handler = Type switch
@@ -49,7 +53,6 @@ public class MessageContainer
             "blind_cleared" => JsonSerializer.Deserialize<BlindClearedMessage>(Data),
             "join_lobby" => JsonSerializer.Deserialize<JoinLobbyMessage>(Data),
             "ability_used" => JsonSerializer.Deserialize<AbilityUsedMessage>(Data),
-            "heartbeat" => JsonSerializer.Deserialize<HeartbeatMessage>(Data),
             _ => null
         };
 
