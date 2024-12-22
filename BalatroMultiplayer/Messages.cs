@@ -75,9 +75,6 @@ public class UpdateScoreMessage : InboundMessage
     {
         await base.Handle(clients, sender);
         Lobby.GetById(sender.LobbyId)?.UpdateScore(sender, Blind, Score);
-        Prize prize = Prize.Prizes[4];
-        await sender.SendMessage(new MessageContainer("declare_winner",
-            new WinLoseMessage(true, prize.Identifier, JsonSerializer.Serialize(prize.GetPrizeJson()), Blind)));
     }
 }
 
