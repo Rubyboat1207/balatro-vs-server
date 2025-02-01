@@ -4,6 +4,7 @@ public class Lobby(string id)
 {
     private static readonly Dictionary<string, Lobby> Lobbies = [];
     public List<BlindData> ContestedBlinds { get; } = [];
+    public List<int> CompletedBlinds { get; } = [];
     private readonly SemaphoreSlim _currentGameLock = new SemaphoreSlim(1, 1);
     private StartGameMessage? _currentGame;
     public readonly List<Player> Players = [];
@@ -20,6 +21,7 @@ public class Lobby(string id)
         if (_currentGame is not null)
         {
             Task.Run(() => player.SendMessage(new MessageContainer("start_game", _currentGame)));
+            
         }
     }
 
@@ -43,6 +45,7 @@ public class Lobby(string id)
     {
         Players.Remove(player);
         player.LobbyId = null;
+        var ip = player.IpAddress;
 
         if (Players.Count != 0) return;
         Lobbies.Remove(id);
@@ -75,6 +78,7 @@ public class Lobby(string id)
     
     public void UpdateScore(Player player, int blind, double score)
     {
+        if(CompletedBlinds.Contains(blind)) return;
         var blindData = ContestedBlinds.Find(cb => cb.Blind == blind);
         
         if (blindData is null)

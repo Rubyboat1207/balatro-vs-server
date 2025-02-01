@@ -4,20 +4,31 @@ using System.Text.Json;
 
 namespace BalatroMultiplayer;
 
+record DisconnectedPlayer(Guid Id, string? OldLobbyId);
+
 public class Player
 {
     private static readonly List<Player> ConnectedClients = [];
     private static readonly object ClientListLock = new();
+    private static readonly Dictionary<string, Guid> DisconnectedIpAddresses = [];
+
     private readonly TcpClient _client;
     public bool LostGame = false;
     public Guid Id = Guid.NewGuid();
     public string? LobbyId = null;
     public Lobby? Lobby => Lobby.GetById(LobbyId);
+    public int CurrentBlind = 0;
+    public string? IpAddress => (_client.Client.RemoteEndPoint as System.Net.IPEndPoint)?.Address.ToString();
 
     public Player(TcpClient client)
     {
         _client = client;
         ConnectedClients.Add(this);
+
+        if (!DisconnectedIpAddresses.TryGetValue(IpAddress!, out var value)) return;
+        Console.WriteLine("Reconnected player!");
+        Id = value;
+        DisconnectedIpAddresses.Remove(IpAddress!);
     }
 
     public static Player? GetById(Guid id)
@@ -55,6 +66,10 @@ public class Player
     private void OnLeave()
     {
         ConnectedClients.Remove(this);
+        if (IpAddress != null && !DisconnectedIpAddresses.ContainsKey(IpAddress!))
+        {
+            DisconnectedIpAddresses.Add(IpAddress, Id);
+        }
 
         if (LobbyId != null) Lobby.GetById(LobbyId)?.Leave(this);
     }

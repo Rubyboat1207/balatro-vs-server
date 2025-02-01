@@ -24,9 +24,9 @@ public class BlindData(Lobby lobby, int blind)
             _playerScores.Add(player.Id, new PlayerData(score, false));
         }
 
-        if (Player.PlayerCount == 1)
+        if (_playerScores.Where(kvp => kvp.Key != player.Id).Select(kvp => kvp.Value.Complete).Count(complete => complete) == lobby.Players.Count - 1)
         {
-            Task.Run(()=>Player.All()[0].SendMessage(new MessageContainer("last_on_blind", JsonSerializer.Serialize(Blind))));
+            _ = player.SendMessage(new MessageContainer("last_on_blind", JsonSerializer.Serialize(Blind)));
         }
     }
 
