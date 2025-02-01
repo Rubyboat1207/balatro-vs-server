@@ -11,16 +11,13 @@ public class Player
     private readonly TcpClient _client;
     public bool LostGame = false;
     public Guid Id = Guid.NewGuid();
+    public string? LobbyId = null;
+    public Lobby? Lobby => Lobby.GetById(LobbyId);
 
     public Player(TcpClient client)
     {
         _client = client;
         ConnectedClients.Add(this);
-
-        if (Program.CurrentGame is not null)
-        {
-            Task.Run(() => SendMessage(new MessageContainer("start_game", Program.CurrentGame)));
-        }
     }
 
     public static Player? GetById(Guid id)
@@ -30,7 +27,8 @@ public class Player
             return ConnectedClients.Find(p => p.Id == id);
         }
     }
-
+    
+    // Dont use generally.
     public static Player[] All()
     {
         Player[] players;
@@ -43,15 +41,6 @@ public class Player
         return players;
     }
 
-    public static async Task WinCheck()
-    {
-        if (All().Count(pl => !pl.LostGame) == 1)
-        {
-            await All().First(pl => !pl.LostGame).SendMessage(new MessageContainer("game_normal", null));
-            Program.CurrentGame = null;
-        }
-    }
-
     public static int PlayerCount
     {
         get
@@ -61,6 +50,13 @@ public class Player
                 return ConnectedClients.Count;
             }
         }
+    }
+
+    private void OnLeave()
+    {
+        ConnectedClients.Remove(this);
+
+        if (LobbyId != null) Lobby.GetById(LobbyId)?.Leave(this);
     }
 
     public async void BeginListening()
@@ -88,14 +84,10 @@ public class Player
                     Console.WriteLine($"Unknown Message! {receivedMessage}");
                     continue;
                 }
-                
-                Player[] clientsCopy;
-                lock(ClientListLock)
-                {
-                    clientsCopy = ConnectedClients.ToArray();
-                }
 
-                await handler.Handle(clientsCopy, this);
+                var clients = LobbyId is not null ? Lobby.GetById(LobbyId)!.Players.ToArray() : [];
+
+                await handler.Handle(clients, this);
             }
         }
         catch (Exception ex)
@@ -106,9 +98,7 @@ public class Player
         {
             lock (ClientListLock)
             {
-                ConnectedClients.Remove(this);
-
-                Program.OnAllClientsDisconnected();
+                OnLeave();
             }
 
             _client.Close();

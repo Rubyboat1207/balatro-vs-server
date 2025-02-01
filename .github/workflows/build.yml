@@ -41,7 +41,7 @@ jobs:
 
     # Upload build artifacts
     - name: Upload binaries
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.os }}-${{ matrix.configuration }}-binaries
         path: build/${{ matrix.os }}/${{ matrix.configuration }}

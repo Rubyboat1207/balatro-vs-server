@@ -1,5 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using BalatroMultiplayer.Abilities;
+using BalatroMultiplayer.Prizes;
 using JetBrains.Annotations;
 
 namespace BalatroMultiplayer;
@@ -37,7 +39,11 @@ public class MessageContainer
     {
         if (Data == null)
         {
-            throw new Exception("Attempted to get handler on empty data");
+            return Type switch
+            {
+                "heartbeat" => new HeartbeatMessage(),
+                _ => null
+            };
         }
         
         InboundMessage? handler = Type switch
@@ -45,6 +51,8 @@ public class MessageContainer
             "update_score" => JsonSerializer.Deserialize<UpdateScoreMessage>(Data),
             "start_game" => JsonSerializer.Deserialize<StartGameMessage>(Data),
             "blind_cleared" => JsonSerializer.Deserialize<BlindClearedMessage>(Data),
+            "join_lobby" => JsonSerializer.Deserialize<JoinLobbyMessage>(Data),
+            "ability_used" => JsonSerializer.Deserialize<AbilityUsedMessage>(Data),
             _ => null
         };
 
@@ -60,13 +68,13 @@ public class MessageContainer
 public class UpdateScoreMessage : InboundMessage
 {
     [JsonPropertyName("score")]
-    public int Score { get; init; }
+    public double Score { get; init; }
     [JsonPropertyName("blind")]
     public int Blind { get; init; }
     public override async Task Handle(Player[] clients, Player sender)
     {
         await base.Handle(clients, sender);
-        BlindData.UpdateScore(sender, Blind, Score);
+        Lobby.GetById(sender.LobbyId)?.UpdateScore(sender, Blind, Score);
     }
 }
 
@@ -79,9 +87,26 @@ public class BlindClearedMessage : InboundMessage
         if (GameOver)
         {
             sender.LostGame = true;
-            await Player.WinCheck();
+            var lobby = Lobby.GetById(sender.LobbyId);
+            if (lobby is not null)
+            {
+                await lobby.WinCheck();
+            }
         }
-        BlindData.MarkCompletedFor(sender, Blind);
+
+        Lobby.GetById(sender.LobbyId)?.MarkBlindCompletedFor(sender, Blind);
+    }
+}
+
+public class JoinLobbyMessage : InboundMessage
+{
+    [JsonPropertyName("lobby_id")] public string? LobbyId { get; init; }
+    public override async Task Handle(Player[] clients, Player sender)
+    {
+        if (LobbyId is null) return;
+        Lobby.Join(LobbyId, sender);
+
+        await sender.SendMessage(new MessageContainer("lobby_joined", null));
     }
 }
 
@@ -97,11 +122,27 @@ public class StartGameMessage : InboundMessage
 
     public override async Task Handle(Player[] clients, Player sender)
     {
-        if (Program.CurrentGame is null)
+        if (sender.LobbyId is not null)
         {
-            await base.Handle(clients, sender);
-            Program.CurrentGame = this;
+            var lobby = Lobby.GetById(sender.LobbyId);
+            lobby?.OnPlayerStartedGame(sender, this);
         }
+    }
+}
+
+public class AbilityUsedMessage : InboundMessage
+{
+    [JsonPropertyName("ability")]
+    public string? Joker { get; init; }
+    [JsonPropertyName("extra_data")]
+    public string? ExtraData { get; init; }
+
+    public override async Task Handle(Player[] clients, Player sender)
+    {
+        var handler = AbilityHandler.Handlers.FirstOrDefault(jh => jh.Identifier == Joker);
+
+        if (handler is null) return;
+        await handler.Handle(sender, ExtraData);
     }
 }
 
@@ -111,4 +152,12 @@ public class WinLoseMessage(bool won, string prizeType, string prizeValue, int b
     [JsonPropertyName("prize_type")] [UsedImplicitly] public string PrizeType { get; set; } = prizeType;
     [JsonPropertyName("prize_value")] [UsedImplicitly] public string PrizeValue { get; set; } = prizeValue;
     [JsonPropertyName("blind")] [UsedImplicitly] public int Blind { get; set; } = blind;
+}
+
+public class HeartbeatMessage : InboundMessage
+{
+    public override async Task Handle(Player[] clients, Player sender)
+    {
+        await sender.SendMessage(new MessageContainer("heartbeat", null));
+    }
 }
