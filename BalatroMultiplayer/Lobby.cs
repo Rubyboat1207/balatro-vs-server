@@ -73,7 +73,7 @@ public class Lobby(string id)
         lobby.Join(player);
     }
     
-    public void UpdateScore(Player player, int blind, int score)
+    public void UpdateScore(Player player, int blind, double score)
     {
         var blindData = ContestedBlinds.Find(cb => cb.Blind == blind);
         

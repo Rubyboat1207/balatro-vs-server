@@ -5,15 +5,15 @@ namespace BalatroMultiplayer;
 
 public class BlindData(Lobby lobby, int blind)
 {
-    private class PlayerData(int score, bool complete)
+    private class PlayerData(double score, bool complete)
     {
-        public int Score = score;
+        public double Score = score;
         public bool Complete = complete;
     }
     private readonly Dictionary<Guid, PlayerData> _playerScores = new();
     public readonly int Blind = blind;
 
-    public void UpdateScore(Player player, int score)
+    public void UpdateScore(Player player, double score)
     {
         if (_playerScores.TryGetValue(player.Id, out var value))
         {
@@ -57,7 +57,7 @@ public class BlindData(Lobby lobby, int blind)
         
         var winningPlayer = Player.GetById(winner.Value.Key);
 
-        int? hardcodedPrize = 4;
+        int? hardcodedPrize = null;
         var prize = hardcodedPrize is null ? Prize.Prizes[new Random().Next(0, Prize.Prizes.Length)] : Prize.Prizes[hardcodedPrize.Value];
 
         WinLoseMessage winMessage = new(true, prize.Identifier, JsonSerializer.Serialize(prize.GetPrizeJson()), Blind);

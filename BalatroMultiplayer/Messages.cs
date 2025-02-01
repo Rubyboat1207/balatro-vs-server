@@ -68,7 +68,7 @@ public class MessageContainer
 public class UpdateScoreMessage : InboundMessage
 {
     [JsonPropertyName("score")]
-    public int Score { get; init; }
+    public double Score { get; init; }
     [JsonPropertyName("blind")]
     public int Blind { get; init; }
     public override async Task Handle(Player[] clients, Player sender)
