@@ -8,13 +8,13 @@ public abstract class Prize
     public static readonly Prize[] Prizes =
     [
         new RandomNumberPrize("gain_money", 5, 20),
-        new RandomElementPrize<string>("random_consumable", ["Tarot", "Planet", "Spectral"]),
+        new RandomElementPrize<string>("random_card", ["Tarot", "Planet", "Spectral"]),
         new RandomJokerPrize(),
-        new RandomElementPrize<CreateCardRequest>("create_joker", [
-            new CreateCardRequest("ghoulish_imp", true)
+        new RandomElementPrize<CreateCardRequest>("create_card", [
+            new CreateCardRequest("j_versus_ghoulish_imp", true, new {negative = true})
         ]),
-        new RandomElementPrize<CreateCardRequest>("create_consumable", [
-            new CreateCardRequest("mask", true)
+        new RandomElementPrize<CreateCardRequest>("create_card", [
+            new CreateCardRequest("c_versus_square", false)
         ])
     ];
     public abstract string Identifier { get; }
@@ -22,9 +22,13 @@ public abstract class Prize
     public abstract object? GetPrizeJson();
 }
 
-public struct CreateCardRequest(string joker, bool? modded = false)
+public struct CreateCardRequest(string joker, bool? perishable, object? edition=null)
 {
     [JsonPropertyName("card")] [UsedImplicitly] public string Joker { get; set; } = joker;
 
-    [JsonPropertyName("modded")] [UsedImplicitly] public bool? Modded { get; set; } = modded;
+    [JsonPropertyName("perishable")] [UsedImplicitly] public bool? Perishable { get; set; } = perishable;
+
+    [JsonPropertyName("edition")]
+    [UsedImplicitly]
+    public object? Edition { get; set; } = edition;
 }
