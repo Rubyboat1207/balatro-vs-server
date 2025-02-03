@@ -5,10 +5,11 @@ namespace BalatroMultiplayer;
 
 public class BlindData(Lobby lobby, int blind)
 {
-    private class PlayerData(double score, bool complete)
+    private class PlayerData(double score, bool complete, DateTime? completionTime=null)
     {
         public double Score = score;
         public bool Complete = complete;
+        public DateTime? CompletionTime = completionTime;
     }
     private readonly Dictionary<Guid, PlayerData> _playerScores = new();
     public readonly int Blind = blind;
@@ -33,6 +34,7 @@ public class BlindData(Lobby lobby, int blind)
     public void OnPlayerComplete(Player player)
     {
         _playerScores[player.Id].Complete = true;
+        _playerScores[player.Id].CompletionTime = DateTime.Now;
         var completed = _playerScores.Count(p => p.Value.Complete);
         
         if (completed != lobby.Players.Count) return;
@@ -48,6 +50,14 @@ public class BlindData(Lobby lobby, int blind)
             }
 
             if (winner.Value.Value.Score < score.Value.Score)
+            {
+                winner = score;
+            }
+            
+            // if scores are equal, check completion time
+            if (!(Math.Abs(winner.Value.Value.Score - score.Value.Score) < 0.1)) continue;
+            
+            if (winner.Value.Value.CompletionTime > score.Value.CompletionTime)
             {
                 winner = score;
             }

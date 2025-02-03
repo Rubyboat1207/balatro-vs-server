@@ -8,7 +8,7 @@ public abstract class Prize
     public static readonly Prize[] Prizes =
     [
         new RandomNumberPrize("gain_money", 5, 20),
-        new RandomElementPrize<string>("random_card", ["Tarot", "Planet", "Spectral"]),
+        new RandomElementPrize<RandomCardRequest>("random_card", [new RandomCardRequest("Tarot"), new RandomCardRequest("Planet"), new RandomCardRequest("Spectral")]),
         new RandomJokerPrize(),
         new RandomElementPrize<CreateCardRequest>("create_card", [
             new CreateCardRequest("j_versus_ghoulish_imp", true, new {negative = true})
@@ -31,4 +31,9 @@ public struct CreateCardRequest(string joker, bool? perishable, object? edition=
     [JsonPropertyName("edition")]
     [UsedImplicitly]
     public object? Edition { get; set; } = edition;
+}
+
+public struct RandomCardRequest(string cardType)
+{
+    [JsonPropertyName("card_type")] [UsedImplicitly] public string CardType { get; set; } = cardType;
 }

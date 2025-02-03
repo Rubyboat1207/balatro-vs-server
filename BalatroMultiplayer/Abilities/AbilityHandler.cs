@@ -18,7 +18,12 @@ public abstract class AbilityHandler
             PlayerPredicates.NotSender
         ),
         new SendMessageHandler("remove_edition", // square of death effect
-            () => new MessageContainer("hand_effect", new HandEffect("jokers", "random_with_edition", "reset_edition"))
+            () => new MessageContainer("hand_effect", new HandEffect("jokers", "random_with_edition", "reset_edition")),
+            PlayerPredicates.NotSender
+        ),
+        new SendMessageHandler("down_level_hand", // europa effect
+            () => new MessageContainer("hand_type_effect", new {selector = "highest", effect = "level", modifier = -1}),
+            PlayerPredicates.NotSender
         )
     ];
     public abstract string Identifier { get; }
